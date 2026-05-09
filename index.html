@@ -525,6 +525,47 @@
       letter-spacing: 0.06em;
     }
     .break-banner.visible { display: block; }
+
+    /* ── mobile ── */
+    @media (max-width: 480px) {
+      body { padding: 1rem 0.75rem; align-items: flex-start; }
+
+      .app { max-width: 100%; }
+
+      .header-title { font-size: 22px; }
+      .header-sub { font-size: 11px; }
+
+      .member-row { gap: 5px; }
+      .member-btn { font-size: 10px; padding: 3px 9px; }
+
+      .card { padding: 1.25rem; }
+
+      .ring-wrap { width: 150px; height: 150px; }
+      .ring-wrap svg { width: 150px; height: 150px; }
+      .ring-time { font-size: 36px; }
+
+      .timer-display { font-size: 72px; }
+
+      .controls { gap: 6px; }
+      .btn { font-size: 12px; padding: 8px 14px; }
+      .btn-main { min-width: 80px; }
+
+      .stats-row { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+      .stat { padding: 10px 6px; }
+      .stat-num { font-size: 22px; }
+      .stat-label { font-size: 9px; }
+
+      .goal-rounds { gap: 5px; }
+      .goal-round-item { font-size: 10px; padding: 4px 7px; }
+
+      .reaction { padding: 8px 10px; }
+      .reaction-text { font-size: 11px; }
+
+      .task-input { font-size: 12px; }
+      .task-name { font-size: 12px; }
+
+      .notes-area { font-size: 12px; min-height: 100px; }
+    }
   </style>
 </head>
 <body>
@@ -893,7 +934,8 @@
   }
 
   function updateDisplay() {
-    document.getElementById('ringTime').textContent = formatTime(secondsLeft);
+    const t = formatTime(secondsLeft);
+    document.getElementById('ringTime').textContent = t;
     const pct = secondsLeft / totalSeconds;
     const circ = 2 * Math.PI * 80;
     document.getElementById('ringFill').style.strokeDashoffset = circ * pct;
@@ -902,29 +944,43 @@
       : 'WORK SESSION — ROUND ' + currentRound + '/' + goalSessions;
     document.getElementById('ringLabel').textContent = isBreak ? 'break' : 'focus';
     document.getElementById('breakBanner').classList.toggle('visible', isBreak);
+    // update browser tab title
+    if (isRunning) {
+      document.title = t + (isBreak ? ' ☕ break' : ' 🐱 focus') + ' — SKZ Focus';
+    } else {
+      document.title = 'SKZ Focus';
+    }
     buildDots();
     updateStats();
   }
 
   /* ── toggle start/pause ── */
+  let startTimestamp = null;
+  let remainingOnPause = null;
+
   function toggleTimer() {
     if (isRunning) {
       clearInterval(interval);
       isRunning = false;
+      remainingOnPause = secondsLeft;
+      startTimestamp = null;
       document.getElementById('startBtn').textContent = 'resume';
       setReaction('idle');
     } else {
       isRunning = true;
+      startTimestamp = Date.now();
+      if (remainingOnPause === null) remainingOnPause = totalSeconds;
       document.getElementById('startBtn').textContent = 'pause';
       setReaction('work');
-      interval = setInterval(tick, 1000);
+      interval = setInterval(tick, 500);
     }
   }
 
   function tick() {
-    if (secondsLeft <= 0) { phaseComplete(); return; }
-    secondsLeft--;
+    const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+    secondsLeft = Math.max(0, remainingOnPause - elapsed);
     updateDisplay();
+    if (secondsLeft <= 0) { phaseComplete(); }
   }
 
   function phaseComplete() {
@@ -951,6 +1007,8 @@
     }
 
     secondsLeft = totalSeconds;
+    remainingOnPause = totalSeconds;
+    startTimestamp = null;
     document.getElementById('startBtn').textContent = isBreak ? 'start break' : 'next round';
     updateDisplay();
   }
@@ -961,6 +1019,8 @@
     isBreak = false;
     secondsLeft = WORK_MINS * 60;
     totalSeconds = WORK_MINS * 60;
+    remainingOnPause = null;
+    startTimestamp = null;
     currentRound = 1;
     document.getElementById('startBtn').textContent = 'start';
     setReaction('idle');
