@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SKZ Focus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet" />
+  <style>
+    /* ── reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #E03C3C;
+      --red-dim: rgba(224, 60, 60, 0.12);
+      --bg: #090909;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: rgba(255,255,255,0.07);
+      --text: #f0f0f0;
+      --muted: #555;
+      --muted2: #333;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── layout ── */
+    .app {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* ── header ── */
+    .header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--text);
+      letter-spacing: 2px;
+    }
+    .header-sub {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      flex: 1;
+    }
+    .sound-toggle {
+      background: transparent;
+      border: 1px solid var(--muted2);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .sound-toggle:hover { border-color: #555; }
+    .sound-toggle.muted { opacity: 0.35; }
+
+    /* ── notes ── */
+    .notes-area {
+      width: 100%;
+      min-height: 120px;
+      background: var(--surface2);
+      border: 1px solid var(--muted2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .notes-area::placeholder { color: var(--muted); }
+    .notes-area:focus { border-color: var(--accent, var(--red)); }
+    .notes-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .notes-saved { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+    /* ── member selector ── */
+    .member-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .member-btn {
+      font-family: var(--font-body);
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--muted2);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.04em;
+    }
+    .member-btn:hover { border-color: #555; color: #aaa; }
+    .member-btn.active {
+      border-color: var(--accent, var(--red));
+      color: var(--accent, var(--red));
+      background: var(--accent-dim, var(--red-dim));
+    }
+
+    /* ── card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 12px;
+    }
+    .card-label {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── timer ── */
+    .timer-wrap { text-align: center; }
+
+    .timer-phase {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--accent, var(--red));
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .timer-display {
+      font-family: var(--font-display);
+      font-size: 88px;
+      line-height: 1;
+      letter-spacing: 4px;
+      color: var(--text);
+      margin-bottom: 4px;
+      transition: color 0.3s;
+    }
+    .timer-display.break-mode { color: #aaa; }
+
+    .session-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 1.5rem;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--muted2);
+      transition: background 0.2s;
+    }
+    .dot.done { background: var(--accent, var(--red)); }
+    .dot.current {
+      background: var(--accent, var(--red));
+      opacity: 0.4;
+    }
+
+    /* ── progress ring ── */
+    .ring-wrap {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1.25rem;
+    }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { stroke: var(--surface2); }
+    .ring-fill {
+      stroke: var(--accent, var(--red));
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    }
+    .ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-time {
+      font-family: var(--font-display);
+      font-size: 44px;
+      letter-spacing: 2px;
+      line-height: 1;
+      color: var(--text);
+    }
+    .ring-label {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    /* ── controls ── */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .btn {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 9px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid var(--muted2);
+      background: transparent;
+      color: var(--muted);
+    }
+    .btn:hover { border-color: #555; color: #aaa; }
+    .btn:active { transform: scale(0.97); }
+    .btn-main {
+      background: var(--accent, var(--red));
+      border-color: var(--accent, var(--red));
+      color: white;
+      min-width: 100px;
+    }
+    .btn-main:hover { opacity: 0.88; }
+
+    /* ── reaction ── */
+    .reaction {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border-left: 2px solid var(--accent, var(--red));
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .reaction-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--accent, var(--red));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 500; color: white;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .reaction-text {
+      font-size: 12px;
+      color: #888;
+      font-style: italic;
+      line-height: 1.5;
+      padding-top: 4px;
+    }
+
+    /* ── stats ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .stat {
+      background: #111111;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 28px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    /* ── goal card ── */
+    .goal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+    .goal-title { font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; color: var(--text); margin-top: 2px; }
+    .goal-edit-btn {
+      font-size: 10px; color: var(--muted); background: transparent; border: 1px solid var(--muted2);
+      border-radius: 6px; padding: 4px 10px; cursor: pointer; letter-spacing: 0.04em; transition: all 0.15s; white-space: nowrap;
+    }
+    .goal-edit-btn:hover { color: #aaa; border-color: #555; }
+    .goal-edit-btn.active { color: var(--accent, var(--red)); border-color: var(--accent, var(--red)); }
+
+    .goal-edit-panel { display: none; background: var(--surface2); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+    .goal-edit-panel.open { display: block; }
+    .goal-edit-row { display: flex; align-items: center; justify-content: space-between; }
+    .goal-edit-label { font-size: 12px; color: #888; }
+    .goal-stepper { display: flex; align-items: center; gap: 12px; }
+    .goal-stepper button {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--muted2);
+      background: transparent; color: var(--text); font-size: 16px; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .goal-stepper button:hover { border-color: var(--accent, var(--red)); color: var(--accent, var(--red)); }
+    .goal-stepper span { font-family: var(--font-display); font-size: 22px; color: var(--text); min-width: 20px; text-align: center; }
+    .goal-edit-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    .goal-rounds { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .goal-round-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 6px;
+      border: 1px solid var(--muted2); background: transparent;
+      font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+      transition: all 0.2s;
+    }
+    .goal-round-item.done {
+      border-color: var(--accent, var(--red));
+      color: var(--accent, var(--red));
+      background: var(--accent-dim, var(--red-dim));
+    }
+    .goal-round-item.current { border-color: #444; color: #888; }
+    .goal-round-check { font-size: 10px; }
+
+    .goal-bar-wrap { margin-top: 4px; }
+    .goal-bar-bg { height: 3px; background: var(--surface2); border-radius: 2px; }
+    .goal-bar-fill { height: 3px; background: var(--accent, var(--red)); border-radius: 2px; width: 0%; transition: width 0.4s ease; }
+
+    /* ── reward overlay ── */
+    .reward-overlay {
+      display: none;
+      background: rgba(0,0,0,0.7);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .reward-overlay.visible { display: block; }
+    .reward-box { }
+    .reward-emoji { font-size: 48px; margin-bottom: 10px; }
+    .reward-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 2px; color: var(--text); margin-bottom: 8px; }
+    .reward-msg { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 16px; font-style: italic; }
+    .reward-close {
+      font-family: var(--font-body); font-size: 12px; padding: 7px 20px;
+      border-radius: 8px; border: 1px solid var(--muted2); background: transparent;
+      color: var(--muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em;
+    }
+    .reward-close:hover { border-color: #555; color: #aaa; }
+
+    /* ── task list ── */
+    .task-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .task-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--muted2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .task-input::placeholder { color: var(--muted); }
+    .task-input:focus { border-color: var(--accent, var(--red)); }
+    .task-add-btn {
+      background: var(--accent, var(--red));
+      border: none;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+      line-height: 1;
+    }
+    .task-add-btn:hover { opacity: 0.85; }
+    .task-add-btn:active { transform: scale(0.95); }
+    .task-empty {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 1.5rem 0;
+      letter-spacing: 0.04em;
+    }
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      transition: opacity 0.2s;
+    }
+    .task-item:last-child { border-bottom: none; }
+    .task-item.done-item { opacity: 0.45; }
+    .task-check {
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: 1px solid var(--muted2);
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      color: white;
+      font-size: 11px;
+    }
+    .task-check:hover { border-color: var(--accent, var(--red)); }
+    .task-check.checked { background: var(--accent, var(--red)); border-color: var(--accent, var(--red)); }
+    .task-name {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .task-name.done-text { text-decoration: line-through; color: var(--muted); }
+    .task-focus-btn {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1px solid var(--muted2);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .task-focus-btn:hover { border-color: var(--accent, var(--red)); color: var(--accent, var(--red)); }
+    .task-focus-btn.focusing { border-color: var(--accent, var(--red)); color: var(--accent, var(--red)); background: var(--accent-dim, var(--red-dim)); }
+    .task-delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted2);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .task-delete-btn:hover { color: #888; }
+    .active-task-strip {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border-radius: 8px;
+      margin-bottom: 14px;
+      border-left: 2px solid var(--accent, var(--red));
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .active-task-strip.visible { display: flex; }
+    .active-task-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent, var(--red));
+      flex-shrink: 0;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .active-task-label { font-size: 12px; color: #888; }
+    .active-task-name { font-size: 12px; color: var(--text); font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tasks-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .tasks-count { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+    .tasks-clear-btn {
+      font-size: 11px;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+    .tasks-clear-btn:hover { color: #888; }
+
+    /* ── break overlay ── */
+    .break-banner {
+      display: none;
+      text-align: center;
+      padding: 8px;
+      background: var(--surface2);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 0.06em;
+    }
+    .break-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <span class="header-title">SKZ FOCUS</span>
+    <span class="header-sub">stay / productivity</span>
+    <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="toggle sound">🔔</button>
+  </div>
+
+  <!-- member selector -->
+  <div class="member-row" id="memberRow"></div>
+
+  <!-- timer card -->
+  <div class="card">
+    <div class="card-label">FOCUS TIMER</div>
+
+    <div class="break-banner" id="breakBanner">☕ break time — you earned it</div>
+
+    <div class="timer-wrap">
+      <div class="timer-phase" id="timerPhase">WORK SESSION</div>
+
+      <div class="ring-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle class="ring-bg" cx="90" cy="90" r="80" fill="none" stroke-width="6" />
+          <circle class="ring-fill" id="ringFill" cx="90" cy="90" r="80" fill="none" stroke-width="6"
+            stroke-dasharray="502.65"
+            stroke-dashoffset="0" />
+        </svg>
+        <div class="ring-inner">
+          <div class="ring-time" id="ringTime">25:00</div>
+          <div class="ring-label" id="ringLabel">focus</div>
+        </div>
+      </div>
+
+      <div class="session-dots" id="sessionDots"></div>
+
+      <div class="controls">
+        <button class="btn" id="resetBtn" onclick="resetTimer()">reset</button>
+        <button class="btn btn-main" id="startBtn" onclick="toggleTimer()">start</button>
+        <button class="btn" onclick="skipPhase()">skip</button>
+      </div>
+
+      <div class="reaction" id="reactionBox">
+        <div class="reaction-avatar" id="reactionAvatar">LK</div>
+        <div class="reaction-text" id="reactionText">"okay. timer's set. don't embarrass yourself."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- daily goal card -->
+  <div class="card" id="goalCard">
+    <div class="goal-header">
+      <div>
+        <div class="card-label">TODAY'S GOAL</div>
+        <div class="goal-title" id="goalTitle">0 / 4 sessions</div>
+      </div>
+      <button class="goal-edit-btn" onclick="toggleGoalEdit()" id="goalEditBtn">edit goal</button>
+    </div>
+
+    <div class="goal-edit-panel" id="goalEditPanel">
+      <div class="goal-edit-row">
+        <span class="goal-edit-label">sessions per day</span>
+        <div class="goal-stepper">
+          <button onclick="changeGoal(-1)">−</button>
+          <span id="goalStepperVal">4</span>
+          <button onclick="changeGoal(1)">+</button>
+        </div>
+      </div>
+      <div class="goal-edit-hint">each session = 1 hr · default is 4 hrs total</div>
+    </div>
+
+    <div class="goal-rounds" id="goalRounds"></div>
+
+    <div class="goal-bar-wrap">
+      <div class="goal-bar-bg">
+        <div class="goal-bar-fill" id="goalBarFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- reward overlay (shown when daily goal hit) -->
+  <div class="reward-overlay" id="rewardOverlay">
+    <div class="reward-box">
+      <div class="reward-emoji" id="rewardEmoji">⭐</div>
+      <div class="reward-title">daily goal complete</div>
+      <div class="reward-msg" id="rewardMsg"></div>
+      <button class="reward-close" onclick="closeReward()">close</button>
+    </div>
+  </div>
+
+  <!-- stats row -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num" id="statSessions">0</div>
+      <div class="stat-label">sessions today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statStreak">0</div>
+      <div class="stat-label">day streak</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statHours">0</div>
+      <div class="stat-label">hrs focused today</div>
+    </div>
+  </div>
+
+  <!-- active task strip shown inside timer area when a task is focused -->
+
+  <!-- task list card -->
+  <div class="card">
+    <div class="card-label">TODAY'S MISSIONS</div>
+
+    <div class="active-task-strip" id="activeTaskStrip">
+      <div class="active-task-dot"></div>
+      <span class="active-task-label">now focusing:</span>
+      <span class="active-task-name" id="activeTaskName"></span>
+    </div>
+
+    <div class="task-input-row">
+      <input class="task-input" id="taskInput" type="text" placeholder="add a mission..." maxlength="80" />
+      <button class="task-add-btn" onclick="addTask()" title="add task">+</button>
+    </div>
+
+    <div id="taskList"></div>
+
+    <div class="tasks-footer">
+      <span class="tasks-count" id="tasksCount">0 tasks</span>
+      <button class="tasks-clear-btn" onclick="clearDone()">clear completed</button>
+    </div>
+  </div>
+  <!-- notes card -->
+  <div class="card">
+    <div class="card-label">SESSION NOTES</div>
+    <textarea class="notes-area" id="notesArea" placeholder="jot things down mid-session — ideas, reminders, anything..."></textarea>
+    <div class="notes-footer">
+      <span class="notes-saved" id="notesSaved"></span>
+      <button class="tasks-clear-btn" onclick="clearNotes()">clear notes</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── member data ── */
+  const members = [
+    {
+      id: 'leeknow', label: 'Lee Know', initials: 'LK',
+      accent: '#E03C3C', accentDim: 'rgba(224,60,60,0.12)',
+      quotes: {
+        idle:  ['"okay. timer\'s set. don\'t embarrass yourself."', '"you started. good. don\'t stop."', '"i\'m watching. the cats are watching."'],
+        work:  ['"you better not be on your phone right now."', '"stay focused. or the cats will judge you too."', '"one full hour. you can do it. probably."', '"don\'t make me come over there."'],
+        break: ['"fine. 10 minutes. don\'t get too comfortable."', '"rest. but not TOO much."', '"okay you earned this one. barely."'],
+        done:  ['"not bad. i\'m slightly impressed."', '"a whole hour. i\'m upgrading my opinion of you."', '"okay fine. you did well."'],
+      }
+    },
+    {
+      id: 'felix', label: 'Felix', initials: 'FX',
+      accent: '#E8A838', accentDim: 'rgba(232,168,56,0.12)',
+      quotes: {
+        idle:  ['"let\'s gooo!! you\'ve got this!!"', '"i believe in you SO much!!"', '"we\'re doing this together ok??"'],
+        work:  ['"you\'re doing SO well!! a whole hour you can do it!!"', '"stay focused!! i\'m cheering for you the whole time!!"', '"you\'re amazing and i mean that with my whole heart!!"'],
+        break: ['"yay break time!! drink some water ok?? please??"', '"you worked a whole hour!! rest well!!"', '"i\'m so proud of you already!!"'],
+        done:  ['"YESSS you did it!! a full hour!! i knew you could!!"', '"that\'s my person!! let\'s go again!!"', '"you\'re literally incredible!!"'],
+      }
+    },
+    {
+      id: 'han', label: 'Han', initials: 'HN',
+      accent: '#9B6FD4', accentDim: 'rgba(155,111,212,0.12)',
+      quotes: {
+        idle:  ['"i wrote 3 songs while you were deciding to start."', '"the timer is judging you. so am i."', '"okay okay let\'s do this. maybe."'],
+        work:  ['"focus!! or i will spiral and write sad lyrics about it."', '"you\'re doing it!! i think?? i\'m also doing it!!"', '"an hour is just 60 minutes. we\'re okay. we\'re fine!!"'],
+        break: ['"break time. i might cry a little. happy tears."', '"resting is productive too!! i read that somewhere."', '"okay okay okay okay we\'re okay."'],
+        done:  ['"WE DID IT. i need to go write about this feeling."', '"that was a whole hour. emotionally exhausting. proud of us."', '"you actually did it. i wrote a song about it already."'],
+      }
+    },
+    {
+      id: 'bangchan', label: 'Bang Chan', initials: 'BC',
+      accent: '#3C8FE0', accentDim: 'rgba(60,143,224,0.12)',
+      quotes: {
+        idle:  ['"hard work always pays off."', '"the plan means nothing without the execution."', '"consistency beats motivation every time."'],
+        work:  ['"stay with it. you\'re doing great."', '"focus mode. an hour is nothing for someone like you."', '"keep going. one step at a time."'],
+        break: ['"you deserve this rest. come back strong."', '"recover well. we\'re going again soon."', '"good work. take a real 10 minutes."'],
+        done:  ['"i\'m proud of you. genuinely."', '"that\'s how it\'s done. a full hour, well worked."', '"see? you\'re more capable than you think."'],
+      }
+    },
+    {
+      id: 'changbin', label: 'Changbin', initials: 'CB',
+      accent: '#3DBD7D', accentDim: 'rgba(61,189,125,0.12)',
+      quotes: {
+        idle:  ['"grind time. no excuses."', '"the bar is set. clear it."', '"energy doesn\'t lie. let\'s go."'],
+        work:  ['"you\'re built for this. keep pushing."', '"don\'t stop now. you\'re in the zone."', '"an hour? easy. you\'ve got this in you."'],
+        break: ['"10 minutes. breathe. then we go again."', '"even the hardest workers rest. take it."', '"recharge. we\'re not done yet."'],
+        done:  ['"LETS GO. that\'s what i\'m talking about."', '"full hour done. you\'re strong for that."', '"that\'s the energy. keep it up."'],
+      }
+    },
+    {
+      id: 'hyunjin', label: 'Hyunjin', initials: 'HJ',
+      accent: '#C06FD4', accentDim: 'rgba(192,111,212,0.12)',
+      quotes: {
+        idle:  ['"your focus is about to be art."', '"channel the energy. let\'s begin."', '"every great work starts with sitting down and doing it."'],
+        work:  ['"you\'re creating something. stay in it."', '"don\'t break the flow. this hour is yours."', '"imagine the feeling when it\'s done. keep going."'],
+        break: ['"rest your mind. beauty needs stillness too."', '"10 minutes. breathe. return refreshed."', '"even the most dedicated artists take breaks."'],
+        done:  ['"look at what you just did. an hour of pure focus."', '"that was beautiful. genuinely."', '"you showed up. that\'s everything."'],
+      }
+    },
+    {
+      id: 'seungmin', label: 'Seungmin', initials: 'SM',
+      accent: '#E05C8A', accentDim: 'rgba(224,92,138,0.12)',
+      quotes: {
+        idle:  ['"okay, let\'s be productive. timer on."', '"you\'ve got things to do. let\'s start."', '"stop delaying. start the timer."'],
+        work:  ['"you\'re doing well. keep the pace."', '"stay consistent. that\'s all it takes."', '"don\'t overthink it. just keep working."'],
+        break: ['"10 minutes break. don\'t waste it scrolling."', '"good work. now actually rest."', '"stretch or something. not just sit there."'],
+        done:  ['"good job. i mean it."', '"a full hour. that\'s solid work."', '"you did it. now do it again tomorrow."'],
+      }
+    },
+    {
+      id: 'jeongin', label: 'I.N', initials: 'IN',
+      accent: '#3BBDBD', accentDim: 'rgba(59,189,189,0.12)',
+      quotes: {
+        idle:  ['"the maknae has logged on. timer goes now."', '"okay!! focus mode!! let\'s actually do this!!"', '"no more stalling!! the work is right there!!"'],
+        work:  ['"don\'t give up!! the finish line exists!!"', '"so focused right now!! keep that energy!!"', '"the whole hour!! it\'s possible!! keep going!!"'],
+        break: ['"break time!! well deserved!! don\'t skip it!!"', '"10 minutes!! rest properly ok?? not just phone scrolling!!"', '"that session was hard!! the break is earned!!"'],
+        done:  ['"A WHOLE HOUR!! that actually happened!!"', '"the results are going to be so worth it!!"', '"let\'s go again!! the momentum is real!!"'],
+      }
+    },
+  ];
+
+  /* ── state ── */
+  const WORK_MINS = 60, BREAK_MINS = 10;
+  let goalSessions = parseInt(localStorage.getItem('skz_goal') || '4');
+  let activeMember = members[0];
+  let totalSeconds = WORK_MINS * 60;
+  let secondsLeft = totalSeconds;
+  let isRunning = false;
+  let isBreak = false;
+  let currentRound = 1;
+  let interval = null;
+
+  /* ── daily reset logic ── */
+  const today = new Date().toDateString();
+  const lastDay = localStorage.getItem('skz_lastday') || '';
+  const isNewDay = lastDay !== today;
+
+  let sessionsToday = isNewDay ? 0 : parseInt(localStorage.getItem('skz_sessions') || '0');
+  let hrsToday = isNewDay ? 0 : parseFloat(localStorage.getItem('skz_hrs') || '0');
+  let streak = parseInt(localStorage.getItem('skz_streak') || '0');
+  let goalRewardShown = isNewDay ? false : (localStorage.getItem('skz_reward_shown') === 'true');
+
+  if (isNewDay) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    const wasYesterday = lastDay === yesterday.toDateString();
+    const prevSessions = parseInt(localStorage.getItem('skz_sessions') || '0');
+    const prevGoal = parseInt(localStorage.getItem('skz_goal') || '4');
+    if (wasYesterday && prevSessions >= prevGoal) {
+      streak++;
+    } else if (!wasYesterday) {
+      streak = 0;
+    }
+    localStorage.setItem('skz_streak', streak);
+    localStorage.setItem('skz_sessions', '0');
+    localStorage.setItem('skz_hrs', '0');
+    localStorage.setItem('skz_reward_shown', 'false');
+    localStorage.setItem('skz_lastday', today);
+  }
+
+  /* ── reward messages per member ── */
+  const rewardMessages = {
+    leeknow: { emoji: '🐱', msg: '"...fine. you actually did it. all of it. i\'m not unimpressed."' },
+    felix:   { emoji: '🌟', msg: '"YOU DID IT!! every single session!! i\'m literally so proud right now!!"' },
+    han:     { emoji: '✍️', msg: '"that was a whole day of work. i wrote a song about this feeling. it\'s called \'you did it\'."' },
+    bangchan:{ emoji: '🎙️', msg: '"full day. every session. that\'s discipline. that\'s what separates people."' },
+    changbin:{ emoji: '💪', msg: '"FULL SET. every hour. that\'s not luck — that\'s grind. respect."' },
+    hyunjin: { emoji: '🎨', msg: '"a complete day\'s work. that\'s art in itself. be proud of that."' },
+    seungmin:{ emoji: '📋', msg: '"done. all of it. no skipped sessions. that\'s just consistency."' },
+    jeongin: { emoji: '🎉', msg: '"EVERY SESSION!! A WHOLE DAY!! THAT\'S INCREDIBLE!!"' },
+  };
+
+  /* ── goal UI ── */
+  function toggleGoalEdit() {
+    const panel = document.getElementById('goalEditPanel');
+    const btn = document.getElementById('goalEditBtn');
+    panel.classList.toggle('open');
+    btn.classList.toggle('active');
+  }
+
+  function changeGoal(delta) {
+    goalSessions = Math.max(1, Math.min(8, goalSessions + delta));
+    document.getElementById('goalStepperVal').textContent = goalSessions;
+    localStorage.setItem('skz_goal', goalSessions);
+    updateGoal();
+  }
+
+  function updateGoal() {
+    document.getElementById('goalTitle').textContent = sessionsToday + ' / ' + goalSessions + ' sessions';
+    document.getElementById('goalStepperVal').textContent = goalSessions;
+    const pct = Math.min(100, (sessionsToday / goalSessions) * 100);
+    document.getElementById('goalBarFill').style.width = pct + '%';
+
+    const wrap = document.getElementById('goalRounds');
+    wrap.innerHTML = '';
+    for (let i = 1; i <= goalSessions; i++) {
+      const item = document.createElement('div');
+      const done = i <= sessionsToday;
+      const current = i === sessionsToday + 1;
+      item.className = 'goal-round-item' + (done ? ' done' : current ? ' current' : '');
+      item.innerHTML = '<span class="goal-round-check">' + (done ? '✓' : '○') + '</span> session ' + i;
+      wrap.appendChild(item);
+    }
+  }
+
+  function showReward() {
+    if (goalRewardShown) return;
+    goalRewardShown = true;
+    localStorage.setItem('skz_reward_shown', 'true');
+    const r = rewardMessages[activeMember.id] || rewardMessages.leeknow;
+    document.getElementById('rewardEmoji').textContent = r.emoji;
+    document.getElementById('rewardMsg').textContent = r.msg;
+    document.getElementById('rewardOverlay').classList.add('visible');
+  }
+
+  function closeReward() {
+    document.getElementById('rewardOverlay').classList.remove('visible');
+  }
+
+  /* ── build member buttons ── */
+  function buildMembers() {
+    const row = document.getElementById('memberRow');
+    row.innerHTML = '';
+    members.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'member-btn' + (m.id === activeMember.id ? ' active' : '');
+      btn.textContent = m.label;
+      btn.onclick = () => setMember(m);
+      row.appendChild(btn);
+    });
+  }
+
+  function setMember(m) {
+    activeMember = m;
+    document.documentElement.style.setProperty('--accent', m.accent);
+    document.documentElement.style.setProperty('--accent-dim', m.accentDim);
+    document.getElementById('reactionAvatar').textContent = m.initials;
+    document.getElementById('reactionAvatar').style.background = m.accent;
+    buildMembers();
+    setReaction('idle');
+  }
+
+  /* ── build session dots (timer rounds) ── */
+  function buildDots() {
+    const wrap = document.getElementById('sessionDots');
+    wrap.innerHTML = '';
+    for (let i = 1; i <= goalSessions; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i < currentRound ? ' done' : i === currentRound ? ' current' : '');
+      wrap.appendChild(d);
+    }
+  }
+
+  /* ── timer display ── */
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return m + ':' + sec;
+  }
+
+  function updateDisplay() {
+    document.getElementById('ringTime').textContent = formatTime(secondsLeft);
+    const pct = secondsLeft / totalSeconds;
+    const circ = 2 * Math.PI * 80;
+    document.getElementById('ringFill').style.strokeDashoffset = circ * pct;
+    document.getElementById('timerPhase').textContent = isBreak
+      ? 'BREAK TIME'
+      : 'WORK SESSION — ROUND ' + currentRound + '/' + goalSessions;
+    document.getElementById('ringLabel').textContent = isBreak ? 'break' : 'focus';
+    document.getElementById('breakBanner').classList.toggle('visible', isBreak);
+    buildDots();
+    updateStats();
+  }
+
+  /* ── toggle start/pause ── */
+  function toggleTimer() {
+    if (isRunning) {
+      clearInterval(interval);
+      isRunning = false;
+      document.getElementById('startBtn').textContent = 'resume';
+      setReaction('idle');
+    } else {
+      isRunning = true;
+      document.getElementById('startBtn').textContent = 'pause';
+      setReaction('work');
+      interval = setInterval(tick, 1000);
+    }
+  }
+
+  function tick() {
+    if (secondsLeft <= 0) { phaseComplete(); return; }
+    secondsLeft--;
+    updateDisplay();
+  }
+
+  function phaseComplete() {
+    clearInterval(interval);
+    isRunning = false;
+    setReaction('done');
+
+    if (!isBreak) {
+      sessionsToday++;
+      hrsToday = Math.round((hrsToday + 1) * 10) / 10;
+      localStorage.setItem('skz_sessions', sessionsToday);
+      localStorage.setItem('skz_hrs', hrsToday);
+      localStorage.setItem('skz_lastday', today);
+      updateGoal();
+      if (sessionsToday >= goalSessions) { playSound('goal_done'); showReward(); }
+      else { playSound('work_done'); }
+      isBreak = true;
+      totalSeconds = BREAK_MINS * 60;
+    } else {
+      playSound('break_done');
+      isBreak = false;
+      if (currentRound < goalSessions) currentRound++;
+      totalSeconds = WORK_MINS * 60;
+    }
+
+    secondsLeft = totalSeconds;
+    document.getElementById('startBtn').textContent = isBreak ? 'start break' : 'next round';
+    updateDisplay();
+  }
+
+  function resetTimer() {
+    clearInterval(interval);
+    isRunning = false;
+    isBreak = false;
+    secondsLeft = WORK_MINS * 60;
+    totalSeconds = WORK_MINS * 60;
+    currentRound = 1;
+    document.getElementById('startBtn').textContent = 'start';
+    setReaction('idle');
+    updateDisplay();
+  }
+
+  function skipPhase() {
+    clearInterval(interval);
+    isRunning = false;
+    phaseComplete();
+  }
+
+  /* ── reactions ── */
+  function setReaction(type) {
+    const pool = activeMember.quotes[type] || activeMember.quotes.idle;
+    const quote = pool[Math.floor(Math.random() * pool.length)];
+    document.getElementById('reactionText').textContent = quote;
+  }
+
+  /* ── stats ── */
+  function updateStats() {
+    document.getElementById('statSessions').textContent = sessionsToday;
+    document.getElementById('statStreak').textContent = streak;
+    document.getElementById('statHours').textContent = hrsToday;
+  }
+
+  /* ── tasks ── */
+  let tasks = JSON.parse(localStorage.getItem('skz_tasks') || '[]');
+  let focusedTaskId = localStorage.getItem('skz_focused') || null;
+
+  function saveTasks() {
+    localStorage.setItem('skz_tasks', JSON.stringify(tasks));
+    localStorage.setItem('skz_focused', focusedTaskId || '');
+  }
+
+  function addTask() {
+    const input = document.getElementById('taskInput');
+    const name = input.value.trim();
+    if (!name) return;
+    tasks.push({ id: Date.now().toString(), name, done: false });
+    input.value = '';
+    saveTasks();
+    renderTasks();
+  }
+
+  function toggleDone(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t) return;
+    t.done = !t.done;
+    if (t.done && focusedTaskId === id) {
+      focusedTaskId = null;
+    }
+    saveTasks();
+    renderTasks();
+  }
+
+  function setFocus(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t || t.done) return;
+    focusedTaskId = focusedTaskId === id ? null : id;
+    saveTasks();
+    renderTasks();
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    if (focusedTaskId === id) focusedTaskId = null;
+    saveTasks();
+    renderTasks();
+  }
+
+  function clearDone() {
+    tasks = tasks.filter(t => !t.done);
+    saveTasks();
+    renderTasks();
+  }
+
+  function renderTasks() {
+    const list = document.getElementById('taskList');
+    const strip = document.getElementById('activeTaskStrip');
+    const activeName = document.getElementById('activeTaskName');
+    const count = document.getElementById('tasksCount');
+
+    if (tasks.length === 0) {
+      list.innerHTML = '<div class="task-empty">no missions yet — add one above</div>';
+    } else {
+      list.innerHTML = '';
+      const sorted = [...tasks.filter(t => !t.done), ...tasks.filter(t => t.done)];
+      sorted.forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'task-item' + (t.done ? ' done-item' : '');
+
+        const check = document.createElement('div');
+        check.className = 'task-check' + (t.done ? ' checked' : '');
+        check.innerHTML = t.done ? '✓' : '';
+        check.onclick = () => toggleDone(t.id);
+
+        const name = document.createElement('span');
+        name.className = 'task-name' + (t.done ? ' done-text' : '');
+        name.textContent = t.name;
+
+        const focusBtn = document.createElement('button');
+        focusBtn.className = 'task-focus-btn' + (focusedTaskId === t.id ? ' focusing' : '');
+        focusBtn.textContent = focusedTaskId === t.id ? 'focusing' : 'focus';
+        focusBtn.onclick = () => setFocus(t.id);
+        if (t.done) focusBtn.style.display = 'none';
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'task-delete-btn';
+        delBtn.textContent = '×';
+        delBtn.title = 'delete';
+        delBtn.onclick = () => deleteTask(t.id);
+
+        row.appendChild(check);
+        row.appendChild(name);
+        row.appendChild(focusBtn);
+        row.appendChild(delBtn);
+        list.appendChild(row);
+      });
+    }
+
+    const focused = tasks.find(t => t.id === focusedTaskId && !t.done);
+    if (focused) {
+      strip.classList.add('visible');
+      activeName.textContent = focused.name;
+    } else {
+      strip.classList.remove('visible');
+      focusedTaskId = null;
+    }
+
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    count.textContent = total === 0 ? '0 tasks' : done + '/' + total + ' done';
+  }
+
+  document.getElementById('taskInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  /* ── sound ── */
+  let soundOn = localStorage.getItem('skz_sound') !== 'off';
+
+  function toggleSound() {
+    soundOn = !soundOn;
+    localStorage.setItem('skz_sound', soundOn ? 'on' : 'off');
+    document.getElementById('soundToggle').classList.toggle('muted', !soundOn);
+    document.getElementById('soundToggle').title = soundOn ? 'sound on' : 'sound off';
+  }
+
+  function playSound(type) {
+    if (!soundOn) return;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const patterns = {
+      work_done: [[523, 0, 0.15], [659, 0.18, 0.15], [784, 0.36, 0.25]],   // C-E-G upward — session done
+      break_done: [[392, 0, 0.12], [349, 0.15, 0.2]],                        // G-F downward — back to work
+      goal_done: [[523,0,0.1],[659,0.12,0.1],[784,0.24,0.1],[1046,0.36,0.3]] // full chord — goal hit
+    };
+    (patterns[type] || patterns.work_done).forEach(([freq, delay, dur]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + dur + 0.05);
+    });
+  }
+
+  /* ── notes ── */
+  const notesArea = document.getElementById('notesArea');
+  const notesSaved = document.getElementById('notesSaved');
+  let notesSaveTimer = null;
+
+  notesArea.value = localStorage.getItem('skz_notes') || '';
+
+  notesArea.addEventListener('input', () => {
+    clearTimeout(notesSaveTimer);
+    notesSaved.textContent = 'saving...';
+    notesSaveTimer = setTimeout(() => {
+      localStorage.setItem('skz_notes', notesArea.value);
+      notesSaved.textContent = 'saved';
+      setTimeout(() => { notesSaved.textContent = ''; }, 2000);
+    }, 800);
+  });
+
+  function clearNotes() {
+    if (!notesArea.value.trim()) return;
+    if (confirm('Clear all notes?')) {
+      notesArea.value = '';
+      localStorage.removeItem('skz_notes');
+      notesSaved.textContent = 'cleared';
+      setTimeout(() => { notesSaved.textContent = ''; }, 2000);
+    }
+  }
+
+  /* ── init ── */
+  renderTasks();
+  document.documentElement.style.setProperty('--accent', activeMember.accent);
+  document.documentElement.style.setProperty('--accent-dim', activeMember.accentDim);
+  document.getElementById('soundToggle').classList.toggle('muted', !soundOn);
+  buildMembers();
+  updateDisplay();
+  updateGoal();
+  setReaction('idle');
+</script>
+</body>
+</html>
